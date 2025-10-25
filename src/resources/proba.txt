@@ -1,0 +1,5 @@
+XOTWOD {
+ xoDouble x ~> 5.123;
+ xoNum y ~> 10;
+ EXODUS x+y;
+}
