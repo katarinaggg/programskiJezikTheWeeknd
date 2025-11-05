@@ -1,0 +1,37 @@
+/* Glavni program sa komentarima
+   i testiranjem void funkcije.
+   /* Ugnježdeni komentar takođe radi! */
+*/
+
+CALLOUT xoVoid pozdrav(xoString ime) {
+    ECHO("Pozdrav, ");
+    ECHO(ime);
+    EXODUS;
+}
+
+XOTWOD {
+
+    // Inicijalizacija sume
+    CALLOUT xoNum suma ~> 0;
+
+    // For-petlja: sabira brojeve 0 do 4
+    repeatAfterMe(CALLOUT xoNum i ~> 0; i < 5; rise i) {
+        suma ~> suma + i;
+    }
+
+    /* Ako je suma manja od nule (nije, ali čisto testiramo)
+       izvršava se ovaj blok.
+    */
+    timeless(suma < 0) {
+        suma ~> suma - 2;
+    }
+
+    // Poziv void funkcije
+    pozdrav("XO Language User");
+
+    // Ispis rezultata
+    ECHO("Krajnja vrednost sume je:");
+    ECHO(suma);
+
+    EXODUS;
+}

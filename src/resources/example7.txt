@@ -1,0 +1,4 @@
+XOTWOD {
+    CALLOUT xoNum x ~> 10$;   // ← $ nije validan karakter u broju
+    EXODUS;
+}

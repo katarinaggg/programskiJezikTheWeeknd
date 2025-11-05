@@ -1,0 +1,14 @@
+XOTWOD {
+    CALLOUT xoNum broj ~> 7;
+    
+    tryMe(broj > 10) {
+        ECHO("Broj je veci od 10");
+    }
+    next(broj = 7) {
+        ECHO("Broj je tacno 7");
+    }
+    orNah {
+        ECHO("Broj nije ni veci od 10 ni 7");
+    }
+    EXODUS;
+}

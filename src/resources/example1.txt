@@ -1,0 +1,19 @@
+CALLOUT xoNum saberi(xoNum a, xoNum b) {
+    CALLOUT xoNum rezultat ~> a + b;
+    EXODUS rezultat;
+}
+
+CALLOUT xoVoid ispisi(xoNum n) {
+    ECHO(n);
+    EXODUS;
+}
+
+XOTWOD {
+    CALLOUT xoNum x ~> 10;
+    CALLOUT xoNum y ~> 25;
+
+    CALLOUT xoNum zbir ~> saberi(x, y);
+    ispisi(zbir);
+
+    EXODUS zbir;
+}

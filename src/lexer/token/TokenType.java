@@ -2,7 +2,7 @@ package lexer.token;
 
 public enum TokenType {
     // tipovi podataka
-    XONUM, XODOUBLE, XOCHAR, XOBOOL, XOSTRING, XOARRAY,
+    XONUM, XODOUBLE, XOCHAR, XOBOOL, XOSTRING, XOARRAY, XOVOID,
 
     // literali
     INT_LIT, DOUBLE_LIT, STRING_LIT, CHAR_LIT, BOOL_LIT,
@@ -24,6 +24,5 @@ public enum TokenType {
 
     TRYME, NEXT, ORNAH,
     REPEATAFTERME, TIMELESS,
-
     EOF
 }
