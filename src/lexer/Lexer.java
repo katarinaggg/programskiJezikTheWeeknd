@@ -21,6 +21,7 @@ public class Lexer {
         Map.entry("xoChar", TokenType.XOCHAR),
         Map.entry("xoBool", TokenType.XOBOOL),
         Map.entry("xoString", TokenType.XOSTRING),
+        Map.entry("xoVoid", TokenType.XOVOID),
         Map.entry("xoArray", TokenType.XOARRAY),
         Map.entry("TRUE", TokenType.BOOL_LIT),
         Map.entry("FALSE", TokenType.BOOL_LIT),
@@ -46,10 +47,62 @@ public class Lexer {
         this.source = source;
     }
 
+    // preskakanje belina i komentra
+    private void skipWhitespaceAndComments() {
+        boolean skipping = true;
+        while (skipping && !sc.isAtEnd()) {
+            skipping = false;
+
+            // preskaci beline
+            while (Character.isWhitespace(sc.peek())) {
+                sc.advance();
+                skipping = true;
+            }
+
+            // jednolinijski komentari
+            if (sc.peek() == '/' && sc.peekNext() == '/') {
+                while (sc.peek() != '\n' && !sc.isAtEnd()) {
+                    sc.advance();
+                }
+                skipping = true;
+            }
+
+            // viselinijski i ugnjezdeni komentari
+            if (sc.peek() == '/' && sc.peekNext() == '*') {
+                sc.advance(); // '/'
+                sc.advance(); // '*'
+                int comment = 1; // nivo ugnjezdenosti
+
+                while (comment > 0 && !sc.isAtEnd()) {
+                    if (sc.peek() == '/' && sc.peekNext() == '*') {
+                        comment++; // novi ugnjezdeni komentar
+                        sc.advance();
+                        sc.advance();
+                    } else if (sc.peek() == '*' && sc.peekNext() == '/') {
+                        comment--; // zatvaranje jednog nivoa
+                        sc.advance();
+                        sc.advance();
+                    } else {
+                        sc.advance();
+                    }
+                }
+
+                if (comment != 0) {
+                    throw error("Unterminated comment");
+                }
+
+                skipping = true;
+            }
+        }
+    }
+
+
     // skenira tokene i stavlja ih u listu
     public List<Token> scanTokens() {
         while (!sc.isAtEnd()) {
+            skipWhitespaceAndComments();
             sc.beginToken();
+            if (sc.isAtEnd()) break; // da ne pokrene scanToken posle EOF
             scanToken();
         }
         tokeni.add(new Token(TokenType.EOF, "\0", null, sc.getLine(), sc.getCol(), sc.getCol()));

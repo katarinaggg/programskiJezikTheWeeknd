@@ -1,0 +1,8 @@
+XOTWOD {
+    tryMe (x < 10)
+        CALLOUT xoNum y ~> 5;
+    orNah {
+        CALLOUT xoNum y ~> 0;
+    }
+    EXODUS;
+}

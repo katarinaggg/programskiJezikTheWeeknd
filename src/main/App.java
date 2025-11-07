@@ -3,6 +3,8 @@ package main;
 import lexer.Lexer;
 import lexer.token.Token;
 import lexer.token.TokenFormatter;
+import parser.Node;
+import parser.Parser;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +23,14 @@ public class App {
             List<Token> tokens = lexer.scanTokens();
 
             System.out.println(TokenFormatter.formatList(tokens));
+
+
+            // 2. Pokrećemo parser
+            Parser parser = new Parser(tokens);
+            Node program = parser.parseProgram();
+
+            System.out.println("\n=== AST ===");
+            program.print("");
 
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());

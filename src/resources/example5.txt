@@ -1,0 +1,5 @@
+XOTWOD {
+    CALLOUT xoNum a ~> 5;
+    CALLOUT xoNum b ~> 10;
+    ECHO(a $ b);   // znak $ nije definisan u jeziku
+}

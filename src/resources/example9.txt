@@ -1,0 +1,5 @@
+XOTWOD {
+    CALLOUT xoNum x ~> 10
+    CALLOUT xoNum y ~> 20;
+    EXODUS;
+}
