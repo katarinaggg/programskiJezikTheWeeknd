@@ -43,7 +43,8 @@ XOTWOD {
     ECHO(test3);
 
     // poziv void funkcije
-    pozdrav("XO korisniče");
+    CALLOUT xoString k ~> "XO korisniče";
+    pozdrav(k);
 
     EXODUS;
 }

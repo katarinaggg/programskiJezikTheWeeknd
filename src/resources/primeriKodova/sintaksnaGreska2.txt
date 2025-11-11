@@ -1,3 +1,4 @@
+// fali { kod tryMe
 XOTWOD {
     tryMe (x < 10)
         CALLOUT xoNum y ~> 5;

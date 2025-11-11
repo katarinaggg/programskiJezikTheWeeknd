@@ -15,5 +15,5 @@ XOTWOD {
     CALLOUT xoNum zbir ~> saberi(x, y);
     ispisi(zbir);
 
-    EXODUS zbir;
+    EXODUS;
 }
