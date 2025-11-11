@@ -1,0 +1,11 @@
+XOTWOD {
+    CALLOUT xoNum i ~> 1;
+
+    CALLOUT xoNum a ~> rise i + 2 * 3;
+
+    CALLOUT xoNum b ~> 10 - rise i * (2 + 3);
+
+    ECHO(a+b);
+
+    EXODUS;
+}

@@ -1,0 +1,5 @@
+//  fali zatvoreni navodnik
+XOTWOD {
+    ECHO("Zdravo svete!);
+    EXODUS;
+}

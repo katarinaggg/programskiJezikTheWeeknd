@@ -1,4 +1,0 @@
-XOTWOD {
-    ECHO("Zdravo svete!);  // ← fali zatvoreni navodnik
-    EXODUS;
-}

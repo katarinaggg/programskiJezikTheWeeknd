@@ -3,8 +3,10 @@ package main;
 import lexer.Lexer;
 import lexer.token.Token;
 import lexer.token.TokenFormatter;
-import parser.Node;
-import parser.Parser;
+import parser.ParserAst;
+import parser.ast.NodeBase;
+import parser.parserAlt.Node;
+import parser.parserAlt.Parser;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,18 +21,25 @@ public class App {
 
         try {
             String source = Files.readString(Path.of(args[0]));
+
+            // LEKSICKA ANALIZA
             Lexer lexer = new Lexer(source);
             List<Token> tokens = lexer.scanTokens();
-
             System.out.println(TokenFormatter.formatList(tokens));
 
 
-            // 2. Pokrećemo parser
+            // SINTAKSNA ANALIZA
+            /*
             Parser parser = new Parser(tokens);
-            Node program = parser.parseProgram();
-
+            Node program1 = parser.parseProgram();
             System.out.println("\n=== AST ===");
-            program.print("");
+            program1.print("");
+            */
+
+            ParserAst parserAst = new ParserAst(tokens);
+            NodeBase program2 = parserAst.parse();
+            System.out.println("\n=== AST ===");
+            program2.print("");
 
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());

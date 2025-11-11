@@ -1,0 +1,122 @@
+// The Weeknd Programski Jezik
+
+// top level funkcije mogu oko main-a
+program         = { func_decl } "XOTWOD" block_main { func_decl } EOF ;
+block_main      = "{" { stmt } "EXODUS" ";" "}" ;
+
+
+//  Naredbe
+stmt            = var_decl
+                | assign_stmt ";"
+                | io_stmt ";"
+                | if_stmt
+                | loop_stmt
+                | return_stmt ";"
+                | block ;
+
+
+block           = "{" { stmt } "}" ;
+
+//  Deklaracije (funkcije i promenljive)
+//  - xoArray MORA imati element-tip
+//  - xoVoid DOZVOLJEN samo kao povratni tip funkcije
+
+func_decl       = "CALLOUT" ret_type IDENT "(" param_list_opt ")" block ;
+
+var_decl        = "CALLOUT" var_type IDENT var_init_opt ";" ;
+
+param_list_opt  = ε | param { "," param } ;
+param           = var_type IDENT ;
+
+var_type        = base_type
+                | "xoArray" base_type ;            // npr. xoArray xoNum
+
+base_type       = "xoNum" | "xoDouble" | "xoChar" | "xoBool" | "xoString" ;
+
+ret_type        = var_type | "xoVoid" ;            // void samo kao povratni tip
+
+var_init_opt    = ε | assign_op expr ;
+
+
+//  Dodela
+assign_stmt     = lvalue assign_op expr ;
+assign_op       = "~>" ;
+
+// ili promenljiva ili niz
+lvalue          = IDENT { "[" expr "]" } ;
+
+
+//  I/O
+io_stmt         = listen_stmt | echo_stmt ;
+listen_stmt     = "LISTEN" "(" lvalue ")" ;
+echo_stmt       = "ECHO" "(" expr ")" ;
+
+
+return_stmt     = "EXODUS" [ expr ] ";" ;
+
+
+// cond je zapravo neki expr
+// u semantickoj analizi ce se proveravati da li je expr zapravo neki uslov ili izraz
+if_stmt         = "tryMe" "(" expr ")" block
+                  { "next" "(" expr ")" block }
+                  [ "orNah" block ] ;
+
+
+//  Petlje (for/while)
+// svi delovi petlje mogu a ne moraju da postoje
+//  for: init = deklaracija | dodela | ε
+//       cond = expr | ε
+//       step = dodela | (rise/fade lvalue) | ε
+
+loop_stmt       = "repeatAfterMe" "(" for_init ";" for_cond_opt ";" for_step_opt ")" block
+                | "timeless" "(" expr ")" block ;
+
+for_init        = decl_for_init | assign_stmt | ε ;
+decl_for_init   = "CALLOUT" var_type IDENT var_init_opt ;
+
+for_cond_opt    = ε | expr ;
+for_step_opt    = ε | ( assign_stmt | unary_step ) ;
+
+unary_step      = ( "rise" | "fade" ) lvalue ;
+
+
+//  Izrazi
+
+expr            = or_expr ;
+
+or_expr         = and_expr { "xoOr" and_expr } ;
+and_expr        = not_expr { "xoAnd" not_expr } ;
+
+not_expr        = "xoNot" not_expr
+                | rel_expr ;
+
+rel_expr        = add_expr { rel_op add_expr } ;
+rel_op          = "=" | "!=" | "<" | ">" | "<=" | ">=" ;
+
+add_expr        = mul_expr { ( "+" | "-" ) mul_expr } ;
+mul_expr        = unary_expr { ( "*" | "/" | "%" ) unary_expr } ;
+
+unary_expr      = ( "+" | "-" ) unary_expr
+                | ( "rise" | "fade" ) lvalue
+                | primary ;
+
+primary         = NUMBER
+                | REAL
+                | STRING
+                | CHAR
+                | "TRUE"
+                | "FALSE"
+                | lvalue
+                | array_lit
+                | "(" expr ")" ;
+
+
+// [] okruzuje literal niza, u okviru njega se nalazi lista elemenata
+// moze da se nalazi i lista nizova -> visedimenzionalni
+// element niza moze da bude i neki expr ali samo racunski izraz (u semantici ce biti ogranicenje)
+
+array_lit       = "[" [ array_element { "," array_element } ] "]" ;
+array_element   = expr | array_lit ;
+
+
+EOF             = ε ;

@@ -1,7 +1,8 @@
-package parser;
+package parser.parserAlt;
 
 import lexer.token.Token;
 import lexer.token.TokenType;
+
 import java.util.List;
 
 public class Parser {
