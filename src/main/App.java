@@ -29,6 +29,9 @@ public class App {
 
 
             // SINTAKSNA ANALIZA
+
+            // alternativni parser (radi samo sa Node)
+            // iz paketa parserAlt
             /*
             Parser parser = new Parser(tokens);
             Node program1 = parser.parseProgram();

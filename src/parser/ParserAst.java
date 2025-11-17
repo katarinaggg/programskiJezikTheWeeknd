@@ -403,7 +403,7 @@ public class ParserAst {
     private Stmt.RepeatAfterMe parseRepeat() {
         consume(TokenType.LPAREN, "Expected '(' after repeatAfterMe.");
 
-        // ---------- init: decl_for_init | assign_stmt | ε ----------
+        //  init: decl_for_init | assign_stmt | ε
         Stmt.RepeatAfterMe.ForInit init = null;
 
         if (match(TokenType.CALLOUT)) {
@@ -427,14 +427,14 @@ public class ParserAst {
         }
         consume(TokenType.SEMICOLON, "Expected ';' after loop init.");
 
-        // ---------- cond: expr | ε ----------
+        //  cond: expr | ε
         Expr cond = null;
         if (!check(TokenType.SEMICOLON)) {
             cond = parseExpr();
         }
         consume(TokenType.SEMICOLON, "Expected ';' after loop condition.");
 
-        // ---------- step: assign_stmt | unary_step | ε ----------
+        //  step: assign_stmt | unary_step | ε
         Stmt.RepeatAfterMe.ForStep step = null;
 
         if (!check(TokenType.RPAREN)) {
@@ -449,13 +449,13 @@ public class ParserAst {
                 step = new Stmt.RepeatAfterMe.StepUnary(new Expr.UnaryStep(op, lv));
             } else {
                 error(peek(), "Expected assignment or rise/fade step in for header.");
-                return null; // unreachable posle error(), ali čuva tip-checkere srećnima
+                return null;
             }
         }
 
         consume(TokenType.RPAREN, "Expected ')' after loop header.");
 
-        // ---------- body ----------
+        //  body
         Ast.Block body = parseBlock();
 
         return new Stmt.RepeatAfterMe(init, cond, step, body);

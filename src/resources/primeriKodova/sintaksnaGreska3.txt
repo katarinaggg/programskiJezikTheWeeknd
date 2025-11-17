@@ -1,0 +1,4 @@
+XOTWOD {
+    CALLOUT xoArray xoNum niz ~> [1, 2, 3;
+    EXODUS;
+}
