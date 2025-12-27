@@ -1,0 +1,14 @@
+CALLOUT xoNum f(xoNum a) {
+    EXODUS TRUE;        //  vraća xoBool umesto xoNum
+}
+
+// nema main-a
+CALLOUT xoVoid funkcija(){
+
+    CALLOUT xoNum x ~> f();   //  pogrešan broj argumenata
+
+    CALLOUT xoNum y ~> 5;
+    y();                      //  poziv promenljive kao funkcije
+
+    EXODUS;
+}

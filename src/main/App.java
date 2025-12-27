@@ -1,12 +1,15 @@
 package main;
 
+import intermediate.CodeGenerator;
+import intermediate.InstructionEmitter;
+import intermediate.LabelManager;
 import lexer.Lexer;
 import lexer.token.Token;
 import lexer.token.TokenFormatter;
 import parser.ParserAst;
+import parser.ast.Ast;
 import parser.ast.NodeBase;
-import parser.parserAlt.Node;
-import parser.parserAlt.Parser;
+import semantic.SemanticAnalyzer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,22 +30,28 @@ public class App {
             List<Token> tokens = lexer.scanTokens();
             System.out.println(TokenFormatter.formatList(tokens));
 
-
             // SINTAKSNA ANALIZA
-
-            // alternativni parser (radi samo sa Node)
-            // iz paketa parserAlt
-            /*
-            Parser parser = new Parser(tokens);
-            Node program1 = parser.parseProgram();
-            System.out.println("\n=== AST ===");
-            program1.print("");
-            */
-
             ParserAst parserAst = new ParserAst(tokens);
-            NodeBase program2 = parserAst.parse();
-            System.out.println("\n=== AST ===");
-            program2.print("");
+            Ast.Program program = parserAst.parse();
+
+            // SEMANTICKA ANALIZA
+            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer();
+            semanticAnalyzer.analyze(program);
+
+            // dodati tipovi na stablo (ako je prosla sem. analiza)
+            if(semanticAnalyzer.getErrors().isEmpty()) {
+                System.out.println("\n=== AST ===");
+                program.print("");
+
+
+
+                // GENERISANJE MEDJUKODA
+                CodeGenerator codeGenerator = new CodeGenerator();
+                //codeGenerator.generate(program);
+                //codeGenerator.writeToFile("output.txt");
+
+            }
+
 
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());

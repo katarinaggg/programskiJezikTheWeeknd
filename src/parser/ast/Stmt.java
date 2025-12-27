@@ -1,6 +1,7 @@
 package parser.ast;
 
 import lexer.token.Token;
+import visitor.Visitor;
 
 import java.util.List;
 
@@ -21,6 +22,11 @@ public abstract class Stmt extends NodeBase {
         protected String valueLabel() {
             return ex.lexeme;
         }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -38,6 +44,11 @@ public abstract class Stmt extends NodeBase {
 
         @Override protected String label() { return "VarDecl"; }
         @Override protected String valueLabel() { return type.valueLabel() + " " + name.lexeme; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
     // lvalue assign_op expr ;
@@ -53,6 +64,11 @@ public abstract class Stmt extends NodeBase {
 
         @Override protected String label() { return "Assign"; }
         @Override protected String valueLabel() { return op.lexeme; } // "~>"
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
     // listen_stmt     = "LISTEN" "(" lvalue ")"
@@ -68,6 +84,11 @@ public abstract class Stmt extends NodeBase {
 
         @Override protected String label() { return "Listen"; }
         @Override protected String valueLabel() { return kw.lexeme; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -84,6 +105,11 @@ public abstract class Stmt extends NodeBase {
 
         @Override protected String label() { return "Echo"; }
         @Override protected String valueLabel() { return kw.lexeme; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -101,6 +127,11 @@ public abstract class Stmt extends NodeBase {
             }
             @Override protected String label() { return "ElseIf"; }
             @Override protected String valueLabel() { return "next"; }
+
+            @Override
+            public void accept(Visitor v) {
+                v.visit(this);
+            }
         }
 
         public static final class Else extends NodeBase {
@@ -108,6 +139,11 @@ public abstract class Stmt extends NodeBase {
             public Else(Ast.Block block) { this.block = block; add(block); }
             @Override protected String label() { return "Else"; }
             @Override protected String valueLabel() { return "orNah"; }
+
+            @Override
+            public void accept(Visitor v) {
+                v.visit(this);
+            }
         }
 
         public final Expr condition;
@@ -126,6 +162,11 @@ public abstract class Stmt extends NodeBase {
 
         @Override protected String label() { return "If"; }
         @Override protected String valueLabel() { return "tryMe"; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -149,6 +190,11 @@ public abstract class Stmt extends NodeBase {
             }
             @Override protected String label() { return "ForInitDecl"; }
             @Override protected String valueLabel() { return type.valueLabel() + " " + name.lexeme; }
+
+            @Override
+            public void accept(Visitor v) {
+                v.visit(this);
+            }
         }
 
         // init kao dodela: assign_stmt (ali bez završnog ';' jer smo u header-u)
@@ -162,6 +208,11 @@ public abstract class Stmt extends NodeBase {
             }
             @Override protected String label() { return "ForInitAssign"; }
             @Override protected String valueLabel() { return op.lexeme; } // "~>"
+
+            @Override
+            public void accept(Visitor v) {
+                v.visit(this);
+            }
         }
 
         // for_step_opt = ε | ( assign_stmt | unary_step )
@@ -178,6 +229,11 @@ public abstract class Stmt extends NodeBase {
             }
             @Override protected String label() { return "ForStepAssign"; }
             @Override protected String valueLabel() { return op.lexeme; }
+
+            @Override
+            public void accept(Visitor v) {
+                v.visit(this);
+            }
         }
 
         // korak kao rise/fade lvalue
@@ -185,6 +241,11 @@ public abstract class Stmt extends NodeBase {
             public final Expr.UnaryStep step;
             public StepUnary(Expr.UnaryStep step) { this.step = step; add(step); }
             @Override protected String label() { return "ForStepUnary"; }
+
+            @Override
+            public void accept(Visitor v) {
+                v.visit(this);
+            }
         }
 
         public final ForInit init;
@@ -199,6 +260,11 @@ public abstract class Stmt extends NodeBase {
 
         @Override protected String label() { return "Loop"; }
         @Override protected String valueLabel() { return "repeatAfterMe"; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
     // timeless "(" expr ")" block
@@ -211,6 +277,11 @@ public abstract class Stmt extends NodeBase {
         }
         @Override protected String label() { return "Loop"; }
         @Override protected String valueLabel() { return "timeless"; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -220,6 +291,11 @@ public abstract class Stmt extends NodeBase {
         public CallStmt(Expr.Call call) { this.call = call; add(call); }
         @Override protected String label() { return "CallStmt"; }
         @Override protected String valueLabel() { return ((Expr.Call)call).name.lexeme; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 }

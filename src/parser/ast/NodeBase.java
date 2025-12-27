@@ -1,5 +1,7 @@
 package parser.ast;
 
+import visitor.Visitor;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,4 +41,6 @@ public abstract class NodeBase {
     protected String label() { return getClass().getSimpleName(); }
     protected String valueLabel() { return ""; }
 
+
+    public abstract void accept(Visitor v);
 }

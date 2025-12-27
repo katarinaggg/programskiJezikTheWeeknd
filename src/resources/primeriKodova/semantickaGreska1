@@ -1,0 +1,17 @@
+XOTWOD {
+
+    CALLOUT xoNum x ~> 5;
+    CALLOUT xoNum x ~> 10;      //  duplikat promenljive
+
+    y ~> x + 1;                 //  y nije deklarisana
+
+    tryMe ("tekst") {           //  uslov nije logički izraz
+        ECHO(x);
+    }
+
+    EXODUS;
+}
+
+XOTWOD {                // 2 main-a
+    EXODUS;
+}
