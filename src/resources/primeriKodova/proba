@@ -1,0 +1,14 @@
+XOTWOD {
+    CALLOUT xoNum a ~> 2;
+    CALLOUT xoNum b ~> 3;
+    CALLOUT xoNum c ~> 4;
+
+    CALLOUT xoNum x ~> 2 + 3 * 4;
+    CALLOUT xoNum y ~> (2 + 3) * 4;
+    CALLOUT xoNum z ~> a + b * c;
+
+    CALLOUT xoNum u ~> -a;
+    CALLOUT xoBool p ~> TRUE xoAnd FALSE xoOr xoNot FALSE;
+
+    EXODUS;
+}

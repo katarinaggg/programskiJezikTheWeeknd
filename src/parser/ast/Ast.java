@@ -1,7 +1,10 @@
 package parser.ast;
 
 import java.util.List;
+import java.util.Objects;
+
 import lexer.token.Token;
+import visitor.Visitor;
 
 public final class Ast {
 
@@ -12,6 +15,7 @@ public final class Ast {
         public final List<FuncDecl> preMain;
         public final BlockMain main;
         public final List<FuncDecl> postMain;
+        public int mainCount = 0;
 
         public Program(List<FuncDecl> preMain, BlockMain main, List<FuncDecl> postMain) {
             this.preMain = preMain;
@@ -26,6 +30,11 @@ public final class Ast {
         @Override
         protected String label() {
             return "Program";
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
         }
     }
 
@@ -44,6 +53,11 @@ public final class Ast {
         protected String label() {
             return "BlockMain";
         }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -52,6 +66,7 @@ public final class Ast {
 
 
     //var_type  = base_type | "xoArray" base_type ;
+    /*
     public static final class VarType extends NodeBase{
         public final BaseType type;
         public final boolean isArray; // da znamo da cuvamo tip u nizu
@@ -68,7 +83,103 @@ public final class Ast {
         protected String valueLabel() {
             return (isArray ? "xoArray " : "") + type.name();
         }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
+    */
+
+    //var_type  = base_type | "xoArray" var_type ;
+    public static final class VarType extends NodeBase {
+
+        // ako je prost tip
+        public final BaseType baseType;
+
+        // ako je niz
+        public final VarType elementType;
+
+        // prost tip (xoNum, xoBool, ...)
+        public VarType(BaseType baseType) {
+            this.baseType = baseType;
+            this.elementType = null;
+        }
+
+        // niz tipa elementType
+        public VarType(VarType elementType) {
+            this.baseType = null;
+            this.elementType = elementType;
+        }
+
+        public boolean isArray() {
+            return elementType != null;
+        }
+
+        public VarType getElementType() {
+            return elementType;
+        }
+
+        public BaseType getBaseType() {
+            if (isArray()) {
+                return elementType.getBaseType();
+            }
+            return baseType;
+        }
+
+        @Override
+        protected String label() {
+            return "VarType";
+        }
+
+        @Override
+        protected String valueLabel() {
+            if (isArray()) {
+                return "xoArray " + elementType.valueLabel();
+            }
+            return baseType.name();
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof VarType other)) return false;
+
+            // jedan je niz, drugi nije
+            if (this.isArray() != other.isArray()) return false;
+
+            // oba su nizovi → poredi elemente
+            if (this.isArray()) {
+                return this.elementType.equals(other.elementType);
+            }
+
+            // oba su prosti tipovi
+            return this.baseType == other.baseType;
+        }
+
+        @Override
+        public int hashCode() {
+            if (isArray()) {
+                return Objects.hash("ARRAY", elementType);
+            }
+            return Objects.hash("BASE", baseType);
+        }
+
+        @Override
+        public String toString() {
+            if (isArray()) {
+                return elementType.toString() + "[]";
+            }
+            return baseType.name();
+        }
+
+    }
+
 
     // ret_type   = var_type | "xoVoid" ;
     public static final class RetType extends NodeBase{
@@ -97,6 +208,11 @@ public final class Ast {
         protected String valueLabel() {
             return isVoid ? "xoVoid" : "";
         }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -111,6 +227,11 @@ public final class Ast {
         }
         @Override protected String label() { return "Param"; }
         @Override protected String valueLabel() { return type.valueLabel() + " " + name.lexeme; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
     //block  = "{" { stmt } "}" ;
@@ -121,6 +242,11 @@ public final class Ast {
             addAll(stmts);
         }
         @Override protected String label() { return "Block"; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
     //func_decl  = "CALLOUT" ret_type IDENT "(" param_list_opt ")" block ;
@@ -138,6 +264,10 @@ public final class Ast {
         @Override protected String label() { return "FuncDecl"; }
         @Override protected String valueLabel() { return name.lexeme + " : " + (retType.isVoid ? "xoVoid" : retType.type.valueLabel()); }
 
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 
@@ -155,6 +285,11 @@ public final class Ast {
 
         @Override protected String label() { return "LValue"; }
         @Override protected String valueLabel() { return name.lexeme; }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
     }
 
 }

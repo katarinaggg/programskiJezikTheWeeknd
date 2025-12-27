@@ -29,7 +29,7 @@ param_list_opt  = ε | param { "," param } ;
 param           = var_type IDENT ;
 
 var_type        = base_type
-                | "xoArray" base_type ;            // npr. xoArray xoNum
+                | "xoArray" var_type ;
 
 base_type       = "xoNum" | "xoDouble" | "xoChar" | "xoBool" | "xoString" ;
 
@@ -96,7 +96,8 @@ rel_op          = "=" | "!=" | "<" | ">" | "<=" | ">=" ;
 add_expr        = mul_expr { ( "+" | "-" ) mul_expr } ;
 mul_expr        = unary_expr { ( "*" | "/" | "%" ) unary_expr } ;
 
-unary_expr      = ( "+" | "-" ) unary_expr
+unary_expr      = "(" base_type ")" unary_expr   // kastovanje
+                | ( "+" | "-" ) unary_expr
                 | ( "rise" | "fade" ) lvalue
                 | primary ;
 

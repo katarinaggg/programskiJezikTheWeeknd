@@ -90,9 +90,19 @@ public class ParserAst {
             pre.add(parseFuncDeclAfterCALLOUT());
         }
 
-        consume(TokenType.XOTWOD, "Expected XOTWOD (start of main).");
+        // moze imati vise mainova ali cuvamo samo prvi
+        // za ostale ce se javiti semanticka greska
+        Ast.BlockMain main = null;
+        int mainCount = 0;
 
-        Ast.BlockMain bm = parseBlockMain();
+        while (match(TokenType.XOTWOD)) {
+            mainCount++;
+            if (mainCount == 1) {
+                main = parseBlockMain();
+            } else {
+                parseBlockMain(); // samo ga parsira i pojede, ne ubacuje se u stablo
+            }
+        }
 
         // funkcije posle main
         List<Ast.FuncDecl> post = new ArrayList<>();
@@ -102,7 +112,11 @@ public class ParserAst {
 
         consume(TokenType.EOF, "Expected EOF at end of program.");
 
-        return new Ast.Program(pre, bm, post);
+        Ast.Program program = new Ast.Program(pre, main, post);
+        // cuvamo koliko je imao main-ova
+        // da bi se bacila greska u semantickoj analizi
+        program.mainCount = mainCount;
+        return program;
     }
 
 
@@ -176,15 +190,17 @@ public class ParserAst {
         return Ast.RetType.ofVar(vt);
     }
 
-    // var_type = base_type | "xoArray" base_type
+
+    // var_type = base_type | "xoArray" var_type
     private Ast.VarType parseVarType() {
 
-        boolean isArray = false;
-
-        // opcioni xoArray
+        // xoArray var_type -> još jedna dimenzija
+        // zovemo rekurzivno
         if (match(TokenType.XOARRAY)) {
-            isArray = true;
+            Ast.VarType inner = parseVarType();
+            return new Ast.VarType(inner);
         }
+        // pokupili smo sve xoArray (dimenzije) i dosli do base tipa elementa
 
         // sada očekujemo jedan od base_type tokena
         Token base = consumeOneOf(
@@ -205,7 +221,7 @@ public class ParserAst {
             default -> { error(base, "Unknown base type."); yield null; }
         };
 
-        return new Ast.VarType(bt, isArray);
+        return new Ast.VarType(bt);
     }
 
 
@@ -542,10 +558,46 @@ public class ParserAst {
     }
 
 
-    // unary_expr = (+ | -) unary_expr
+    // pomocne funkcije za kastovanje
+    private Ast.BaseType tokenToBaseType(Token t) {
+        return switch (t.type) {
+            case XONUM -> Ast.BaseType.XONUM;
+            case XODOUBLE -> Ast.BaseType.XODOUBLE;
+            case XOCHAR -> Ast.BaseType.XOCHAR;
+            case XOBOOL -> Ast.BaseType.XOBOOL;
+            case XOSTRING -> Ast.BaseType.XOSTRING;
+            default -> {
+                error(t, "Invalid base type in cast.");
+                yield null;
+            }
+        };
+    }
+
+    private boolean checkNextBaseType() {
+        if (current + 1 >= tokens.size()) return false;
+        TokenType t = tokens.get(current + 1).type;
+        return t == TokenType.XONUM
+                || t == TokenType.XODOUBLE
+                || t == TokenType.XOCHAR
+                || t == TokenType.XOBOOL
+                || t == TokenType.XOSTRING;
+    }
+
+
+    // unary_expr = "(" base_type ")" unary_expr
+    //            | (+ | -) unary_expr
     //            | (rise | fade) lvalue
     //            | primary
     private Expr parseUnaryExpr() {
+
+        if (check(TokenType.LPAREN) && checkNextBaseType()) {
+            consume(TokenType.LPAREN, "Expected '(' in cast.");
+            Token typeTok = advance();
+            Ast.BaseType targetType = tokenToBaseType(typeTok);
+            consume(TokenType.RPAREN, "Expected ')' after cast type.");
+            Expr inner = parseUnaryExpr();
+            return new Expr.Cast(targetType, inner);
+        }
 
         if (match(TokenType.ADD, TokenType.SUBTRACT)) {
             Token op = previous();

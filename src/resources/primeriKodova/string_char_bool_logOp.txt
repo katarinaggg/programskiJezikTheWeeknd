@@ -2,9 +2,9 @@
    Test za string, char, bool i logičke operatore
    =========================================== */
 
-// funkcija koja proverava da li su dva karaktera ista
-CALLOUT xoBool istiZnak(xoChar c1, xoChar c2) {
-    tryMe (c1 = c2) {
+
+CALLOUT xoBool isti(xoNum x, xoNum y) {
+    tryMe (x = y) {
         EXODUS TRUE;
     } orNah {
         EXODUS FALSE;
@@ -15,23 +15,29 @@ CALLOUT xoBool istiZnak(xoChar c1, xoChar c2) {
 CALLOUT xoVoid pozdrav(xoString ime) {
     ECHO("Zdravo, ");
     ECHO(ime);
-    ECHO("! Dobrodošao u XO jezik.");
+    CALLOUT xoChar znak ~> '!';
+    ECHO(znak);
+    ECHO(" Dobrodošao u XO jezik.");
     EXODUS;
 }
 
 XOTWOD {
 
-    CALLOUT xoChar znak1 ~> 'A';
-    CALLOUT xoChar znak2 ~> 'a';
-    CALLOUT xoBool isti ~> istiZnak(znak1, znak2);
+    CALLOUT xoNum x ~> 10;
+    CALLOUT xoNum y ~> 10;
+    CALLOUT xoBool rez ~> isti(x, y);
 
     // testiranje logičkih izraza
-    CALLOUT xoBool test1 ~> xoNot isti;               // negacija
-    CALLOUT xoBool test2 ~> (isti xoOr test1);        // OR
-    CALLOUT xoBool test3 ~> (isti xoAnd test2);       // AND
+    CALLOUT xoBool test1 ~> xoNot rez;               // negacija
+    CALLOUT xoBool test2 ~> (rez xoOr test1);        // OR
+    CALLOUT xoBool test3 ~> (rez xoAnd test2);       // AND
 
-    ECHO("Rezultat provere istih znakova:");
-    ECHO(isti);
+    // poziv void funkcije
+    CALLOUT xoString k ~> "XO korisniče";
+    pozdrav(k);
+
+    ECHO("Rezultat provere brojeva:");
+    ECHO(rez);
 
     ECHO("Negacija (xoNot):");
     ECHO(test1);
@@ -41,10 +47,6 @@ XOTWOD {
 
     ECHO("AND (xoAnd) rezultat:");
     ECHO(test3);
-
-    // poziv void funkcije
-    CALLOUT xoString k ~> "XO korisniče";
-    pozdrav(k);
 
     EXODUS;
 }

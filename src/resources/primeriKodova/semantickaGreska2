@@ -1,0 +1,14 @@
+XOTWOD {
+
+    CALLOUT xoNum a ~> 3;
+    CALLOUT xoDouble b ~> 2.5;
+
+    CALLOUT xoNum c ~> a + b;          //  int + double
+
+    CALLOUT xoBool p ~> TRUE;
+    CALLOUT xoNum r ~> (p xoAnd 5);    //  logički operator nad ne-bool
+
+    c ~> a[0];                              //  indeksiranje broja
+
+    EXODUS;
+}
