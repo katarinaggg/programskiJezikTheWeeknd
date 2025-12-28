@@ -898,6 +898,12 @@ public class SemanticAnalyzer implements Visitor {
     }
 
     @Override
+    public void visit(Stmt.UnaryStepStmt stmt) {
+        stmt.step.accept(this); // proverava se tip lvalue (mora broj)
+    }
+
+
+    @Override
     public void visit(Expr.Call call) {
         String name = call.name.lexeme;
 
@@ -971,14 +977,11 @@ public class SemanticAnalyzer implements Visitor {
         }
     }
 
-
     @Override
     public void visit(Expr.Cast cast) {
 
-        // prvo obradimo izraz koji se kastuje
+        // 1. Analiziraj izraz koji se kastuje
         cast.expr.accept(this);
-
-        // izvucemo njegov tip
         Ast.VarType exprType = cast.expr.inferredType;
 
         if (exprType == null) {
@@ -986,7 +989,7 @@ public class SemanticAnalyzer implements Visitor {
             return;
         }
 
-        // ne sme kastovanje nizova
+        // 2. Nizovi se ne kastuju
         if (exprType.isArray()) {
             reportError(
                     SemanticError.Type.INVALID_CAST,
@@ -998,28 +1001,41 @@ public class SemanticAnalyzer implements Visitor {
             return;
         }
 
-        Ast.BaseType from = exprType.baseType;
-        Ast.BaseType to = cast.targetType;
+        Ast.BaseType from = exprType.getBaseType();
+        Ast.BaseType to   = cast.targetType;
 
-
-        // xoNum -> xoDouble (uvek dozvoljeno)
+        // 3. xoNum -> xoDouble (UVEK DOZVOLJENO)
         if (from == Ast.BaseType.XONUM && to == Ast.BaseType.XODOUBLE) {
             cast.inferredType = new Ast.VarType(to);
             return;
         }
 
-        // xoDouble -> xoNum (samo ako je .0)
+        // 4. xoDouble -> xoNum (SAMO ako je REAL LITERAL sa .0*)
         if (from == Ast.BaseType.XODOUBLE && to == Ast.BaseType.XONUM) {
 
-            // dozvoljeno samo ako je literal tipa Real
             if (cast.expr instanceof Expr.RealLit real) {
 
-                double value = real.value;
-                if (value == Math.floor(value)) {
-                    cast.inferredType = new Ast.VarType(to);
-                    return;
+                String lexeme = real.token.lexeme; // npr "12.0", "12.000"
+
+                if (lexeme.contains(".")) {
+                    String decimal = lexeme.substring(lexeme.indexOf('.') + 1);
+
+                    boolean onlyZeros = true;
+                    for (char c : decimal.toCharArray()) {
+                        if (c != '0') {
+                            onlyZeros = false;
+                            break;
+                        }
+                    }
+
+                    if (onlyZeros) {
+                        cast.inferredType = new Ast.VarType(to);
+                        return;
+                    }
                 }
             }
+
+            // sve ostalo je GREŠKA
             reportError(
                     SemanticError.Type.INVALID_CAST,
                     cast,
@@ -1030,7 +1046,7 @@ public class SemanticAnalyzer implements Visitor {
             return;
         }
 
-        // inace greska
+        // 5. Sve ostalo je nelegalno
         reportError(
                 SemanticError.Type.INVALID_CAST,
                 cast,
@@ -1038,8 +1054,6 @@ public class SemanticAnalyzer implements Visitor {
                 "cannot cast from " + from + " to " + to
         );
         cast.inferredType = null;
-
-
     }
 
 

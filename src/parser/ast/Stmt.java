@@ -298,4 +298,26 @@ public abstract class Stmt extends NodeBase {
         }
     }
 
+    // rise lvalue ;  |  fade lvalue ;
+    public static final class UnaryStepStmt extends Stmt {
+        public final Expr.UnaryStep step;
+
+        public UnaryStepStmt(Expr.UnaryStep step) {
+            this.step = step;
+            add(step);
+        }
+
+        @Override protected String label() { return "UnaryStep"; }
+
+        @Override
+        protected String valueLabel() {
+            return step.op.lexeme; // "rise" ili "fade"
+        }
+
+        @Override
+        public void accept(Visitor v) {
+            v.visit(this);
+        }
+    }
+
 }

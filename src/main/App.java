@@ -47,8 +47,8 @@ public class App {
 
                 // GENERISANJE MEDJUKODA
                 CodeGenerator codeGenerator = new CodeGenerator();
-                //codeGenerator.generate(program);
-                //codeGenerator.writeToFile("output.txt");
+                codeGenerator.generate(program);
+                codeGenerator.writeToFile("output.txt");
 
             }
 

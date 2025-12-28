@@ -42,4 +42,5 @@ public interface Visitor {
     void visit(Stmt.RepeatAfterMe.StepUnary stepUnary);
     void visit(Stmt.Timeless timeless);
     void visit(Stmt.CallStmt callStmt);
+    void visit(Stmt.UnaryStepStmt stmt);
 }
