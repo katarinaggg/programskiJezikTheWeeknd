@@ -274,6 +274,15 @@ public class ParserAst {
 
         if (check(TokenType.LBRACE)) return parseBlock();
 
+        // unary_step kao samostalna naredba
+        if (check(TokenType.RISE) || check(TokenType.FADE)) {
+            Token op = advance();          // RISE | FADE
+            Ast.LValue lv = parseLValue(); // mora IDENT ili IDENT[index]
+            consume(TokenType.SEMICOLON, "Expected ';' after rise/fade.");
+
+            Expr.UnaryStep stepExpr = new Expr.UnaryStep(op, lv);
+            return new Stmt.UnaryStepStmt(stepExpr);
+        }
 
         // call kao samostalna naredba: IDENT "(" ... ")" ";"
         if (check(TokenType.IDENT) && checkNext(TokenType.LPAREN)) {
