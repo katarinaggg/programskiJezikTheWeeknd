@@ -1,0 +1,25 @@
+CALLOUT xoNum saberi(xoNum a, xoNum b) {
+    EXODUS a + b;
+}
+
+XOTWOD {
+    CALLOUT xoNum x ~> 7;
+
+    // eksplicitno kastovanje iz xoNum u xoDouble (uvek dozvoljeno)
+    CALLOUT xoDouble y ~> (xoDouble) x;
+
+    // realan broj, ali sa .0 (decimalni deo je 0)
+    CALLOUT xoDouble z ~> 12.0;
+
+    // eksplicitno kastovanje iz xoDouble u xoNum
+    // DOZVOLJENO jer je decimalni deo = 0
+    CALLOUT xoNum w ~> (xoNum) z;
+
+    // koriscenje kastovanih vrednosti u izrazu
+     CALLOUT xoDouble rezultat ~> (xoDouble) saberi(x, w);
+
+    ECHO("Rezultat je:");
+    ECHO(rezultat);
+
+    EXODUS;
+}

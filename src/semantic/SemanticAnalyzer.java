@@ -226,6 +226,11 @@ public class SemanticAnalyzer implements Visitor {
 
         // stavljamo je u scope
         VarSymbol symbol = new VarSymbol(name, varDecl.type);
+
+        if (varDecl.init != null) {
+            symbol.setInitExpr(varDecl.init);
+        }
+
         currentScope.define(symbol);
 
         // inicijalizacija (ako postoji)
@@ -977,6 +982,16 @@ public class SemanticAnalyzer implements Visitor {
         }
     }
 
+    private boolean isIntegerRealLiteral(String lexeme) {
+        if (!lexeme.contains(".")) return false;
+
+        String decimal = lexeme.substring(lexeme.indexOf('.') + 1);
+        for (char c : decimal.toCharArray()) {
+            if (c != '0') return false;
+        }
+        return true;
+    }
+
     @Override
     public void visit(Expr.Cast cast) {
 
@@ -1010,32 +1025,33 @@ public class SemanticAnalyzer implements Visitor {
             return;
         }
 
-        // 4. xoDouble -> xoNum (SAMO ako je REAL LITERAL sa .0*)
+// 4. xoDouble -> xoNum
         if (from == Ast.BaseType.XODOUBLE && to == Ast.BaseType.XONUM) {
 
+            // SLUCAJ 1: direktan real literal
             if (cast.expr instanceof Expr.RealLit real) {
+                if (isIntegerRealLiteral(real.token.lexeme)) {
+                    cast.inferredType = new Ast.VarType(to);
+                    return;
+                }
+            }
 
-                String lexeme = real.token.lexeme; // npr "12.0", "12.000"
+            // SLUCAJ 2: promenljiva inicijalizovana real literalom
+            if (cast.expr instanceof Expr.LValueRef ref) {
 
-                if (lexeme.contains(".")) {
-                    String decimal = lexeme.substring(lexeme.indexOf('.') + 1);
+                Symbol s = currentScope.resolve(ref.target.name.lexeme);
+                if (s instanceof VarSymbol var) {
 
-                    boolean onlyZeros = true;
-                    for (char c : decimal.toCharArray()) {
-                        if (c != '0') {
-                            onlyZeros = false;
-                            break;
+                    Expr init = var.getInitExpr(); // moras je imati sacuvanu u VarSymbol
+                    if (init instanceof Expr.RealLit realInit) {
+                        if (isIntegerRealLiteral(realInit.token.lexeme)) {
+                            cast.inferredType = new Ast.VarType(to);
+                            return;
                         }
-                    }
-
-                    if (onlyZeros) {
-                        cast.inferredType = new Ast.VarType(to);
-                        return;
                     }
                 }
             }
 
-            // sve ostalo je GREŠKA
             reportError(
                     SemanticError.Type.INVALID_CAST,
                     cast,
@@ -1045,6 +1061,7 @@ public class SemanticAnalyzer implements Visitor {
             cast.inferredType = null;
             return;
         }
+
 
         // 5. Sve ostalo je nelegalno
         reportError(
