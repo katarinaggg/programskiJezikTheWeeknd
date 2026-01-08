@@ -4,11 +4,23 @@ import parser.ast.Ast;
 import parser.ast.Expr;
 import parser.ast.Stmt;
 import visitor.Visitor;
-
 public class CodeGenerator implements Visitor {
 
+    // Emitter skuplja instrukcije i kasnije ih upisuje u fajl
     InstructionEmitter emitter;
+
+    // LabelManager pravi jedinstvene labele
+    // (IF_END, LOOP_START, RET, itd.)
     LabelManager labelManager;
+
+    // Flag koji oznacava da li smo u main funkciji
+    // koristi se da se return u main-u ignorise
+    private boolean inMain = false;
+
+    // Flag koji pamti da li funkcija ima eksplicitan return
+    // ako nema, na kraju funkcije se radi jmp IP
+    private boolean functionHasReturn = false;
+
 
     public CodeGenerator() {
         this.emitter = new InstructionEmitter();
@@ -64,11 +76,10 @@ public class CodeGenerator implements Visitor {
 
         // za svaki indeks (svaka dimenzija)
         for (Expr idx : lValueRef.target.indices) {
-            idx.accept(this);      // izračunaj indeks
+            idx.accept(this);      // izracunaj indeks
             emitter.emit("array_get");
         }
     }
-
 
     @Override
     public void visit(Expr.Unary unary) {
@@ -114,37 +125,40 @@ public class CodeGenerator implements Visitor {
 
     @Override
     public void visit(Ast.Program program) {
-        // funkcije pre main-a
+
+        emitter.emit("jmp MAIN");
+
         for (Ast.FuncDecl f : program.preMain) {
             f.accept(this);
         }
-
-        // main
-        program.main.accept(this);
-
-        // funkcije posle main-a
         for (Ast.FuncDecl f : program.postMain) {
             f.accept(this);
         }
+
+        emitter.emitLabel("MAIN");
+        program.main.accept(this);
     }
+
 
     @Override
     public void visit(Ast.BlockMain blockMain) {
-        emitter.emit("main:");
+        inMain = true;
+
         for (Stmt stmt : blockMain.stmts) {
             stmt.accept(this);
         }
-    }
 
+        inMain = false;
+    }
 
     @Override
     public void visit(Ast.VarType varType) {
-        // nema međukoda
+        // nema medjukoda
     }
 
     @Override
     public void visit(Ast.RetType retType) {
-        // nema međukoda
+        // nema medjukoda
     }
 
     @Override
@@ -162,9 +176,28 @@ public class CodeGenerator implements Visitor {
 
     @Override
     public void visit(Ast.FuncDecl funcDecl) {
-        String funcLabel = funcDecl.name.lexeme;
-        emitter.emit(funcLabel + ":");
+
+        String skipFunc = labelManager.newLabel("SKIP_FUNC");
+        emitter.emit("jmp " + skipFunc);
+
+        emitter.emitLabel(funcDecl.name.lexeme);
+
+        emitter.emit("pop IP");
+
+        functionHasReturn = false;
+
+        for (int i = funcDecl.params.size() - 1; i >= 0; i--) {
+            emitter.emit("pop " + funcDecl.params.get(i).name.lexeme);
+        }
+
         funcDecl.body.accept(this);
+
+        // SAMO AKO NIJE BILO return-a
+        if (!functionHasReturn) {
+            emitter.emit("jmp IP");
+        }
+
+        emitter.emitLabel(skipFunc);
     }
 
 
@@ -178,7 +211,7 @@ public class CodeGenerator implements Visitor {
         // ime promenljive
         String varName = unaryStep.target.name.lexeme;
 
-        // učitaj trenutnu vrednost
+        // ucitaj trenutnu vrednost
         emitter.emit("push " + varName);
         emitter.emit("push 1");
 
@@ -191,8 +224,10 @@ public class CodeGenerator implements Visitor {
             throw new RuntimeException("Nepoznat unary step operator: " + unaryStep.op.lexeme);
         }
 
-        // upiši nazad u promenljivu
+        // upisi nazad u promenljivu
         emitter.emit("pop " + varName);
+        // nova vrednost je i REZULTAT IZRAZA
+        emitter.emit("push " + varName);
     }
 
     @Override
@@ -206,57 +241,65 @@ public class CodeGenerator implements Visitor {
         emitter.emit("new_array " + n);
     }
 
-
     @Override
     public void visit(Expr.Call call) {
-        // argumenti
+
+        // 1. argumenti
         for (Expr arg : call.args) {
             arg.accept(this);
         }
 
+        // 2. povratna adresa
         String retLabel = labelManager.newLabel("RET");
         emitter.emit("push " + retLabel);
-        emitter.emit("jmp " + call.name.lexeme);
-        emitter.emit(retLabel + ":");
-    }
 
+        // 3. skok NA LABELU FUNKCIJE
+        emitter.emit("jmp " + call.name.lexeme);
+
+        // 4. povratak
+        emitter.emitLabel(retLabel);
+
+    }
 
     @Override
     public void visit(Expr.Cast cast) {
         cast.expr.accept(this);
         emitter.emit("cast_" + cast.targetType.toString().toLowerCase());
     }
-
-
     @Override
     public void visit(Stmt.Return returnStmt) {
+
+        if (inMain) {
+            return;   // return u main-u se ignorise
+        }
+
         if (returnStmt.expr != null) {
             returnStmt.expr.accept(this);
         }
-        emitter.emit("pop IP");
+
+        functionHasReturn = true;
         emitter.emit("jmp IP");
     }
-
 
     @Override
     public void visit(Stmt.VarDecl varDecl) {
         // ako postoji inicijalizacija
         if (varDecl.init != null) {
-            // izračunaj izraz (vrednost ostaje na steku)
+            // izracunaj izraz (vrednost ostaje na steku)
             varDecl.init.accept(this);
 
-            // upiši vrednost u promenljivu
+            // upisi vrednost u promenljivu
             emitter.emit("pop " + varDecl.name.lexeme);
         }
-        // ako nema init-a → nema međukoda
+        // ako nema init-a onda nema medjukoda
     }
 
     @Override
     public void visit(Stmt.Assign assignStmt) {
-        // izračunaj vrednost (ostavlja rezultat na steku)
+        // izracunaj vrednost (ostavlja rezultat na steku)
         assignStmt.value.accept(this);
 
-        // upiši u promenljivu
+        // upisi u promenljivu
         emitter.emit("pop " + assignStmt.target.name.lexeme);
     }
 
@@ -271,63 +314,72 @@ public class CodeGenerator implements Visitor {
         emitter.emit("echo");
     }
 
-
     @Override
     public void visit(Stmt.If ifStmt) {
+
         String endLabel = labelManager.newLabel("IF_END");
-        String nextLabel;
+        String ifFalse = labelManager.newLabel("IF_FALSE");
 
         // IF
         ifStmt.condition.accept(this);
-        nextLabel = labelManager.newLabel("IF_NEXT");
-        emitter.emit("jmp_zero " + nextLabel);
+        emitter.emit("jmp_zero " + ifFalse);
+
         ifStmt.thenBlock.accept(this);
         emitter.emit("jmp " + endLabel);
-        emitter.emit(nextLabel + ":");
+
+        // IF_FALSE
+        emitter.emitLabel(ifFalse);
 
         // ELSE IF*
         for (Stmt.If.ElseIf ei : ifStmt.elseIfs) {
+
+            String elseIfFalse = labelManager.newLabel("ELSEIF_FALSE");
+
             ei.condition.accept(this);
-            String skip = labelManager.newLabel("ELSEIF_NEXT");
-            emitter.emit("jmp_zero " + skip);
+            emitter.emit("jmp_zero " + elseIfFalse);
+
             ei.block.accept(this);
             emitter.emit("jmp " + endLabel);
-            emitter.emit(skip + ":");
+
+            emitter.emitLabel(elseIfFalse);
         }
 
-        // ELSE
+        // ELSE (orNah)
         if (ifStmt.elseBranch != null) {
             ifStmt.elseBranch.block.accept(this);
         }
 
-        emitter.emit(endLabel + ":");
+        // END — tacka izlaza
+        emitter.emitLabel(endLabel);
     }
+
 
     @Override
     public void visit(Stmt.If.ElseIf elseIfStmt) {
-        // obrađuje se u visit(Stmt.If)
+        // obradjuje se u visit(Stmt.If)
     }
 
     @Override
     public void visit(Stmt.If.Else elseStmt) {
-        // obrađuje se u visit(Stmt.If)
+        // obradjuje se u visit(Stmt.If)
     }
-
 
     @Override
     public void visit(Stmt.RepeatAfterMe repeatAfterMe) {
-        String start = labelManager.newLabel("LOOP_START");
-        String end   = labelManager.newLabel("LOOP_END");
+
+        String startLabel = labelManager.newLabel("LOOP_START");
+        String endLabel   = labelManager.newLabel("LOOP_END");
 
         if (repeatAfterMe.init != null) {
             repeatAfterMe.init.accept(this);
         }
 
-        emitter.emit(start + ":");
+        emitter.emitLabel(startLabel);
+
 
         if (repeatAfterMe.cond != null) {
             repeatAfterMe.cond.accept(this);
-            emitter.emit("jmp_zero " + end);
+            emitter.emit("jmp_zero " + endLabel);
         }
 
         repeatAfterMe.body.accept(this);
@@ -336,8 +388,9 @@ public class CodeGenerator implements Visitor {
             repeatAfterMe.step.accept(this);
         }
 
-        emitter.emit("jmp " + start);
-        emitter.emit(end + ":");
+        emitter.emit("jmp " + startLabel);
+
+        emitter.emitLabel(endLabel);
     }
 
 
@@ -348,7 +401,6 @@ public class CodeGenerator implements Visitor {
             emitter.emit("pop " + initDecl.name.lexeme);
         }
     }
-
 
     @Override
     public void visit(Stmt.RepeatAfterMe.InitAssign initAssign) {
@@ -369,22 +421,27 @@ public class CodeGenerator implements Visitor {
         stepUnary.step.accept(this);
     }
 
-
     @Override
     public void visit(Stmt.Timeless timeless) {
         String start = labelManager.newLabel("WHILE_START");
         String end   = labelManager.newLabel("WHILE_END");
 
-        emitter.emit(start + ":");
-        timeless.condition.accept(this);
-        emitter.emit("jmp_zero " + end);
+        // LABELA = pocetak uslova
+        emitter.emitLabel(start);
 
+        // USLOV
+        timeless.condition.accept(this);   // ostavlja bool na steku
+        emitter.emit("jmp_zero " + end);   // ako false onda kraj petlje
+
+        // TELO PETLJE
         timeless.body.accept(this);
 
+        // POVRATAK NA USLOV OBAVEZNO
         emitter.emit("jmp " + start);
-        emitter.emit(end + ":");
-    }
 
+        // KRAJ PETLJE
+        emitter.emitLabel(end);
+    }
 
     @Override
     public void visit(Stmt.CallStmt callStmt) {
